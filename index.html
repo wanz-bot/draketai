@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      font-family: system-ui, sans-serif;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+      border-left: 1px solid #1e293b;
+      border-right: 1px solid #1e293b;
+    }
+    .header {
+      padding: 14px;
+      font-weight: bold;
+      text-align: center;
+      border-bottom: 1px solid #1e293b;
+    }
+    .messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 12px;
+      max-width: 85%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .user {
+      background: #2563eb;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .assistant {
+      background: #1e293b;
+      align-self: flex-start;
+      margin-right: auto;
+    }
+    .typing {
+      font-style: italic;
+      color: #93c5fd;
+      margin: 8px 14px;
+    }
+    .input-box {
+      display: flex;
+      border-top: 1px solid #1e293b;
+    }
+    textarea {
+      flex: 1;
+      background: #020617;
+      border: none;
+      color: white;
+      padding: 12px;
+      resize: none;
+      height: 48px;
+      outline: none;
+    }
+    button {
+      background: #2563eb;
+      border: none;
+      color: white;
+      padding: 0 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="header">🤖 AI Chat</div>
+
+    <div class="messages" id="messages"></div>
+    <div class="typing" id="typing" style="display:none;">
+      AI sedang berpikir…
+    </div>
+
+    <div class="input-box">
+      <textarea id="input" placeholder="Tulis pesan..."></textarea>
+      <button id="send">Kirim</button>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://draket.unbanwa79.workers.dev"; // GANTI JIKA PERLU
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const typingEl = document.getElementById("typing");
+
+    // ✅ PRELOAD ASSISTANT MESSAGE (INI KUNCINYA)
+    const messages = [
+      {
+        role: "assistant",
+        content:
+          "Hello! I'm an LLM chat app powered by Cloudflare Workers AI. How can I help you today?"
+      }
+    ];
+
+    // tampilkan pesan awal di UI
+    addMessage("assistant", messages[0].content);
+
+    function addMessage(role, content) {
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      div.textContent = content;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      // user message
+      addMessage("user", text);
+      messages.push({ role: "user", content: text });
+
+      inputEl.value = "";
+      sendBtn.disabled = true;
+      typingEl.style.display = "block";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages })
+        });
+
+        const data = await res.json();
+
+        addMessage("assistant", data.reply);
+        messages.push({ role: "assistant", content: data.reply });
+
+      } catch (err) {
+        addMessage("assistant", "❌ Gagal menghubungi API");
+      } finally {
+        typingEl.style.display = "none";
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    inputEl.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+    </html>

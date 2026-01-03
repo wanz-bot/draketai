@@ -79,6 +79,10 @@
       font-weight: bold;
       cursor: pointer;
     }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -86,6 +90,7 @@
     <div class="header">🤖 AI Chat</div>
 
     <div class="messages" id="messages"></div>
+
     <div class="typing" id="typing" style="display:none;">
       AI sedang berpikir…
     </div>
@@ -97,13 +102,17 @@
   </div>
 
   <script>
-    const API_URL = "https://draket.unbanwa79.workers.dev"; // GANTI JIKA PERLU
+    // 🔧 GANTI URL API KAMU
+    const API_URL = "https://draket.unbanwa79.workers.dev/api/chat";
+
     const messagesEl = document.getElementById("messages");
     const inputEl = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const typingEl = document.getElementById("typing");
 
-    // ✅ PRELOAD ASSISTANT MESSAGE (INI KUNCINYA)
+    // ===============================
+    // PRELOAD ASSISTANT MESSAGE
+    // ===============================
     const messages = [
       {
         role: "assistant",
@@ -112,7 +121,7 @@
       }
     ];
 
-    // tampilkan pesan awal di UI
+    // tampilkan pesan awal
     addMessage("assistant", messages[0].content);
 
     function addMessage(role, content) {
@@ -127,7 +136,7 @@
       const text = inputEl.value.trim();
       if (!text) return;
 
-      // user message
+      // tampilkan pesan user
       addMessage("user", text);
       messages.push({ role: "user", content: text });
 
@@ -138,14 +147,23 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messages: messages
+          })
         });
 
         const data = await res.json();
 
-        addMessage("assistant", data.reply);
-        messages.push({ role: "assistant", content: data.reply });
+        // 🔥 INI FIX UTAMANYA
+        // API KAMU BALIKIN field: data.response
+        addMessage("assistant", data.response);
+        messages.push({
+          role: "assistant",
+          content: data.response
+        });
 
       } catch (err) {
         addMessage("assistant", "❌ Gagal menghubungi API");
@@ -165,4 +183,4 @@
     });
   </script>
 </body>
-    </html>
+</html>
